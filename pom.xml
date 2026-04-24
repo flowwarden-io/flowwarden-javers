@@ -24,6 +24,13 @@
         <javers.version>7.7.0</javers.version>
     </properties>
 
+    <repositories>
+        <repository>
+            <id>github</id>
+            <url>https://maven.pkg.github.com/flowwarden-io/flowwarden-stream-core</url>
+        </repository>
+    </repositories>
+
     <distributionManagement>
         <repository>
             <id>github</id>
