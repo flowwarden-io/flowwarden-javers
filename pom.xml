@@ -24,6 +24,14 @@
         <javers.version>7.7.0</javers.version>
     </properties>
 
+    <distributionManagement>
+        <repository>
+            <id>github</id>
+            <name>GitHub Packages</name>
+            <url>https://maven.pkg.github.com/flowwarden-io/flowwarden-javers</url>
+        </repository>
+    </distributionManagement>
+
     <dependencies>
         <dependency>
             <groupId>io.flowwarden</groupId>
