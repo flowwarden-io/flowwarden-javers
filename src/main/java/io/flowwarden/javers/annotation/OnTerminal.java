@@ -1,0 +1,27 @@
+package io.flowwarden.javers.annotation;
+
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
+/**
+ * Marks a method as a handler for Javers {@code TERMINAL} snapshots — when an
+ * entity is deleted from the audited repository.
+ *
+ * <p>Supported signatures:</p>
+ * <ul>
+ *   <li>{@code void handle(T entity, JaversChangeContext<T> ctx)}</li>
+ *   <li>{@code void handle(JaversChangeContext<T> ctx)}</li>
+ *   <li>{@code void handle(T entity)}</li>
+ * </ul>
+ *
+ * <p>Note: for TERMINAL snapshots, the entity state represents the last known
+ * state before deletion.</p>
+ */
+@Target(ElementType.METHOD)
+@Retention(RetentionPolicy.RUNTIME)
+@Documented
+public @interface OnTerminal {
+}
