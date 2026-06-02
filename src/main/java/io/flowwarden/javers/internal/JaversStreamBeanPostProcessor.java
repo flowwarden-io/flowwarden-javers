@@ -112,6 +112,14 @@ public class JaversStreamBeanPostProcessor implements BeanPostProcessor, Applica
                 DeploymentMode.ALL_INSTANCES
         );
 
+        // Pass discovered Javers handler names as metadata for the reporter
+        Map<String, Object> metadata = Map.of(
+                "handlers", handlers.keySet().stream()
+                        .map(k -> "JAVERS_" + k)
+                        .sorted()
+                        .toList()
+        );
+
         ChangeStreamDefinition definition = new ChangeStreamDefinition(
                 streamName,
                 snapshotCollection,
@@ -126,7 +134,8 @@ public class JaversStreamBeanPostProcessor implements BeanPostProcessor, Applica
                 cpAnnotation,
                 retryAnnotation,
                 dlqAnnotation,
-                new ErrorHandlerResolver(List.of())
+                new ErrorHandlerResolver(List.of()),
+                metadata
         );
 
         // Register with FlowWarden's StreamRegistry
