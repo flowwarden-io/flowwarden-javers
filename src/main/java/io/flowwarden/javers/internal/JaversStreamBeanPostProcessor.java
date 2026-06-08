@@ -9,8 +9,10 @@ import io.flowwarden.stream.ChangeStreamContext;
 import io.flowwarden.stream.DeploymentMode;
 import io.flowwarden.stream.FullDocumentBeforeChangeMode;
 import io.flowwarden.stream.FullDocumentMode;
+import io.flowwarden.stream.OperationType;
 import io.flowwarden.stream.annotation.Checkpoint;
 import io.flowwarden.stream.annotation.DeadLetterQueue;
+import io.flowwarden.stream.annotation.MongoDlqOptions;
 import io.flowwarden.stream.annotation.RetryPolicy;
 import io.flowwarden.stream.core.ContextHandler;
 import io.flowwarden.stream.internal.discovery.ChangeStreamDefinition;
@@ -38,7 +40,6 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -93,6 +94,7 @@ public class JaversStreamBeanPostProcessor implements BeanPostProcessor, Applica
         Checkpoint cpAnnotation = AnnotationUtils.findAnnotation(targetClass, Checkpoint.class);
         RetryPolicy retryAnnotation = AnnotationUtils.findAnnotation(targetClass, RetryPolicy.class);
         DeadLetterQueue dlqAnnotation = AnnotationUtils.findAnnotation(targetClass, DeadLetterQueue.class);
+        MongoDlqOptions mongoDlqAnnotation = AnnotationUtils.findAnnotation(targetClass, MongoDlqOptions.class);
 
         // Build the internal dispatch handler
         Class<?> entityType = annotation.entityType();
@@ -100,7 +102,12 @@ public class JaversStreamBeanPostProcessor implements BeanPostProcessor, Applica
             dispatch(bean, ctx, entityType, handlers);
         };
 
-        HandlerMethod onChangeHandler = HandlerMethod.fromContextHandler(dispatchHandler);
+        // Javers writes every snapshot (INITIAL/UPDATE/TERMINAL) as a new document in
+        // jv_snapshots — at the Mongo Change Stream level it is always an INSERT. Registering
+        // as a typed handler avoids stream-core's onChange annotation-filter path which NPEs
+        // on lambda-backed HandlerMethods (no underlying java.lang.reflect.Method).
+        HandlerMethod insertHandler = HandlerMethod.fromContextHandler(dispatchHandler);
+        Map<OperationType, HandlerMethod> typedHandlers = Map.of(OperationType.INSERT, insertHandler);
 
         StreamConfig config = new StreamConfig(
                 true,
@@ -126,14 +133,15 @@ public class JaversStreamBeanPostProcessor implements BeanPostProcessor, Applica
                 annotation.database(),
                 "",
                 bean,
-                onChangeHandler,
-                Collections.emptyMap(),
+                null,
+                typedHandlers,
                 config,
                 null,  // pipeline — handled via internal filtering
                 null,  // filter
                 cpAnnotation,
                 retryAnnotation,
                 dlqAnnotation,
+                mongoDlqAnnotation,
                 new ErrorHandlerResolver(List.of()),
                 metadata
         );
@@ -177,9 +185,19 @@ public class JaversStreamBeanPostProcessor implements BeanPostProcessor, Applica
         Document state = fullDoc.get("state", Document.class);
         Object entityInstance = null;
         if (state != null) {
+            // Javers stores entity state under Java field names; Spring Data MongoConverter
+            // resolves the @Id field via "_id". Hydrate it from globalId.cdoId so the primary
+            // key round-trips back into the deserialized entity.
+            Document stateWithId = new Document(state);
+            if (!stateWithId.containsKey("_id")) {
+                Object cdoId = globalId.get("cdoId");
+                if (cdoId != null) {
+                    stateWithId.put("_id", cdoId);
+                }
+            }
             try {
                 MongoConverter converter = applicationContext.getBean(MongoConverter.class);
-                entityInstance = converter.read(entityType, state);
+                entityInstance = converter.read(entityType, stateWithId);
             } catch (Exception e) {
                 log.warn("Failed to deserialize Javers state for entity {}: {}",
                         entityType.getSimpleName(), e.getMessage());

@@ -1,0 +1,6 @@
+spring:
+  data:
+    mongodb:
+      database: flowwarden-javers-test
+flowwarden:
+  default-mode: IMPERATIVE
