@@ -24,7 +24,7 @@
         <javers.version>7.7.0</javers.version>
         <testcontainers.version>1.21.4</testcontainers.version>
         <mockito.version>5.23.0</mockito.version>
-        <awaitility.version>4.2.2</awaitility.version>
+        <awaitility.version>4.3.0</awaitility.version>
     </properties>
 
     <repositories>
