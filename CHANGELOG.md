@@ -8,6 +8,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+
+### Changed
+
+### Removed
+
+### Fixed
+
+### Deprecated
+
+### Security
+
+## [1.0.0-rc.1] — 2026-07-06
+
+### Added
 - Initial public release of the FlowWarden Javers integration — connects [Javers](https://javers.org) audit snapshots to [FlowWarden Stream Core](https://github.com/flowwarden-io/flowwarden-stream-core) so applications react to audit changes in real time instead of manually watching the `jv_snapshots` collection.
 - `@JaversStream` — declarative, class-level handler that subscribes to an audited entity's trail and receives the **deserialized domain object** plus Javers metadata (commit author, changed properties, version history) via `JaversChangeContext`.
 - `@OnInitial`, `@OnUpdate`, `@OnTerminal` — method annotations to route the initial snapshot, updates, and terminal (delete) events of an entity to dedicated handlers.
@@ -25,3 +39,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Security
 
 [Unreleased]: https://github.com/flowwarden-io/flowwarden-javers/compare/v1.0.0-rc.1...HEAD
+[1.0.0-rc.1]: https://github.com/flowwarden-io/flowwarden-javers/releases/tag/v1.0.0-rc.1
