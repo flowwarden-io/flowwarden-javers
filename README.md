@@ -154,15 +154,15 @@ All standard FlowWarden annotations work on `@JaversStream` classes:
 |-----------|-------------|---------|
 | **[flowwarden-stream-core](https://github.com/flowwarden-io/flowwarden-stream-core)** | Declarative MongoDB Change Streams library for Spring Boot | Apache 2.0 |
 | **[flowwarden-javers](https://github.com/flowwarden-io/flowwarden-javers)** | Native Javers audit stream integration | Apache 2.0 |
-| **flowwarden-redis** | Redis-backed `LockService` and `CheckpointStore` backends | Apache 2.0 |
+| **[flowwarden-redis](https://github.com/flowwarden-io/flowwarden-redis)** | Redis-backed `LockService` and `CheckpointStore` backends | Apache 2.0 |
 | **flowwarden-rabbit-streams** | RabbitMQ Streams-backed dead-letter queue store | Apache 2.0 |
-| **flowwarden-amqp** | AMQP (RabbitMQ) dead-letter queue store | Apache 2.0 |
+| **[flowwarden-amqp](https://github.com/flowwarden-io/flowwarden-amqp)** | AMQP (RabbitMQ) publish-only dead-letter queue store | Apache 2.0 |
 | **flowwarden-reporter** | Connects your streams to FlowWarden Console for monitoring | Apache 2.0 |
 | **FlowWarden Console** | Dashboard for monitoring, alerting, and managing Change Streams | Commercial |
 
 ## Documentation
 
-Full documentation is available at **[docs.flowwarden.io](https://docs.flowwarden.io)**.
+Full documentation is available at **[docs.flowwarden.io](https://docs.flowwarden.io)** — start with the [Javers integration guide](https://docs.flowwarden.io/guides/javers-integration).
 
 ## License
 
