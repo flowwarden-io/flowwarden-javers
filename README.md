@@ -8,6 +8,7 @@
   <a href="https://www.apache.org/licenses/LICENSE-2.0"><img src="https://img.shields.io/badge/License-Apache_2.0-blue.svg" alt="License"></a>
   <a href="https://www.oracle.com/java/technologies/javase/jdk17-archive-downloads.html"><img src="https://img.shields.io/badge/Java-17%2B-orange.svg" alt="Java 17+"></a>
   <a href="https://spring.io/projects/spring-boot"><img src="https://img.shields.io/badge/Spring_Boot-3.x-brightgreen.svg" alt="Spring Boot 3.x"></a>
+  <a href="https://central.sonatype.com/artifact/io.flowwarden/flowwarden-javers"><img src="https://img.shields.io/maven-central/v/io.flowwarden/flowwarden-javers.svg" alt="Maven Central"></a>
 </p>
 
 ---
@@ -36,17 +37,17 @@ Built on top of MongoDB Change Streams, it captures Javers audit events in real 
 <dependency>
     <groupId>io.flowwarden</groupId>
     <artifactId>flowwarden-stream-core</artifactId>
-    <version>1.0.0-MVP-SNAPSHOT</version>
+    <version>1.0.0-rc.3</version>
 </dependency>
 <dependency>
     <groupId>io.flowwarden</groupId>
     <artifactId>flowwarden-javers</artifactId>
-    <version>1.0.0-MVP-SNAPSHOT</version>
+    <version>1.0.0-rc.1</version>
 </dependency>
 <dependency>
     <groupId>org.javers</groupId>
     <artifactId>javers-spring-boot-starter-mongo</artifactId>
-    <version>7.7.0</version>
+    <version>7.11.5</version>
 </dependency>
 ```
 
@@ -143,8 +144,8 @@ All standard FlowWarden annotations work on `@JaversStream` classes:
 |-----------|---------|-------------|
 | Java | 17 | 21 |
 | Spring Boot | 3.2.x | 3.2.x+ |
-| FlowWarden Stream Core | 1.0.0 | 1.0.0+ |
-| Javers | 7.x | 7.7.0+ |
+| FlowWarden Stream Core | 1.0.0-rc.3 | 1.0.0-rc.3+ |
+| Javers | 7.x | 7.11.5+ |
 | MongoDB Server | 6.0 | 7.0+ |
 
 ## FlowWarden Ecosystem
@@ -153,6 +154,9 @@ All standard FlowWarden annotations work on `@JaversStream` classes:
 |-----------|-------------|---------|
 | **[flowwarden-stream-core](https://github.com/flowwarden-io/flowwarden-stream-core)** | Declarative MongoDB Change Streams library for Spring Boot | Apache 2.0 |
 | **[flowwarden-javers](https://github.com/flowwarden-io/flowwarden-javers)** | Native Javers audit stream integration | Apache 2.0 |
+| **flowwarden-redis** | Redis-backed `LockService` and `CheckpointStore` backends | Apache 2.0 |
+| **flowwarden-rabbit-streams** | RabbitMQ Streams-backed dead-letter queue store | Apache 2.0 |
+| **flowwarden-amqp** | AMQP (RabbitMQ) dead-letter queue store | Apache 2.0 |
 | **flowwarden-reporter** | Connects your streams to FlowWarden Console for monitoring | Apache 2.0 |
 | **FlowWarden Console** | Dashboard for monitoring, alerting, and managing Change Streams | Commercial |
 
