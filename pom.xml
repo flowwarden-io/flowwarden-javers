@@ -61,7 +61,7 @@
     <properties>
         <java.version>17</java.version>
         <license.year>2026</license.year>
-        <javers.version>7.7.0</javers.version>
+        <javers.version>7.11.5</javers.version>
         <testcontainers.version>1.21.4</testcontainers.version>
         <mockito.version>5.23.0</mockito.version>
         <awaitility.version>4.2.2</awaitility.version>
