@@ -61,7 +61,7 @@
     <properties>
         <java.version>17</java.version>
         <license.year>2026</license.year>
-        <javers.version>7.11.5</javers.version>
+        <javers.version>7.11.8</javers.version>
         <testcontainers.version>1.21.4</testcontainers.version>
         <mockito.version>5.23.0</mockito.version>
         <awaitility.version>4.3.0</awaitility.version>
@@ -90,7 +90,7 @@
         <dependency>
             <groupId>io.flowwarden</groupId>
             <artifactId>flowwarden-stream-core</artifactId>
-            <version>1.0.0-rc.3</version>
+            <version>1.0.0-rc.4-SNAPSHOT</version>
         </dependency>
 
         <dependency>
@@ -145,13 +145,32 @@
         </dependency>
     </dependencies>
 
+    <!-- SNAPSHOTs only: resolves unreleased stream-core snapshots published by
+         core CI to GitHub Packages (reads require authentication even for
+         public packages — CI uses GITHUB_TOKEN; locally either configure a
+         read:packages PAT for server id "github" in ~/.m2/settings.xml or
+         `./mvnw install` the core checkout). Releases resolve from Maven
+         Central as usual. -->
+    <repositories>
+        <repository>
+            <id>github</id>
+            <url>https://maven.pkg.github.com/flowwarden-io/flowwarden-stream-core</url>
+            <releases>
+                <enabled>false</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
+
     <build>
         <plugins>
             <!-- Enforce Apache 2.0 license headers on all sources -->
             <plugin>
                 <groupId>com.mycila</groupId>
                 <artifactId>license-maven-plugin</artifactId>
-                <version>5.0.0</version>
+                <version>5.1.1</version>
                 <configuration>
                     <licenseSets>
                         <licenseSet>
