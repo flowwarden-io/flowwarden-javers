@@ -12,6 +12,8 @@ for [FlowWarden Stream Core](https://github.com/flowwarden-io/flowwarden-stream-
 - Java 17+
 - Docker (integration tests provision a MongoDB container via Testcontainers)
 
+> **Note:** When `main` temporarily depends on a `-SNAPSHOT` of `flowwarden-stream-core` (between core releases), resolve it either by configuring a GitHub PAT with `read:packages` for server id `github` in your `~/.m2/settings.xml`, or by building the core locally: `git clone https://github.com/flowwarden-io/flowwarden-stream-core && cd flowwarden-stream-core && ./mvnw install -DskipTests`.
+
 ## Build & test
 
 ```bash
