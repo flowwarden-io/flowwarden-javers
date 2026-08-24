@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
+- `flowwarden-stream-core` baseline: 1.0.0-rc.4. No code change needed — Javers streams register a typed `INSERT` handler only (`jv_snapshots` writes are always inserts at the change stream level), so none of core's dispatch changes affect this layer. Inherited runtime improvements worth knowing: a dropped/renamed `jv_snapshots` collection is now detected and handled per the stream's `onHistoryLost` strategy (self-heal or fail-stop) instead of leaving a silently dead cursor, runtime cursor death auto-restarts through the resume cascade, and idle Javers streams gain the oplog-rollover heartbeat protection (on by default).
 
 ### Removed
 
