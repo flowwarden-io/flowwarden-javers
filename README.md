@@ -37,12 +37,12 @@ Built on top of MongoDB Change Streams, it captures Javers audit events in real 
 <dependency>
     <groupId>io.flowwarden</groupId>
     <artifactId>flowwarden-stream-core</artifactId>
-    <version>1.0.0-rc.3</version>
+    <version>1.0.0-rc.4</version>
 </dependency>
 <dependency>
     <groupId>io.flowwarden</groupId>
     <artifactId>flowwarden-javers</artifactId>
-    <version>1.0.0-rc.1</version>
+    <version>1.0.0-rc.2</version>
 </dependency>
 <dependency>
     <groupId>org.javers</groupId>
@@ -144,7 +144,7 @@ All standard FlowWarden annotations work on `@JaversStream` classes:
 |-----------|---------|-------------|
 | Java | 17 | 21 |
 | Spring Boot | 3.2.x | 3.2.x+ |
-| FlowWarden Stream Core | 1.0.0-rc.3 | 1.0.0-rc.3+ |
+| FlowWarden Stream Core | 1.0.0-rc.4 | 1.0.0-rc.4+ |
 | Javers | 7.x | 7.11.5+ |
 | MongoDB Server | 6.0 | 7.0+ |
 
