@@ -23,38 +23,38 @@ class KebabCaseTest {
 
     @Test
     void convertsSimplePascalCase() {
-        assertThat(JaversStreamBeanPostProcessor.toKebabCase("ProductAuditHandler"))
+        assertThat(JaversStreamContributor.toKebabCase("ProductAuditHandler"))
                 .isEqualTo("product-audit-handler");
     }
 
     @Test
     void convertsTwoWordPascalCase() {
-        assertThat(JaversStreamBeanPostProcessor.toKebabCase("SimpleClass"))
+        assertThat(JaversStreamContributor.toKebabCase("SimpleClass"))
                 .isEqualTo("simple-class");
     }
 
     @Test
     void singleLowercaseWordStaysUnchanged() {
-        assertThat(JaversStreamBeanPostProcessor.toKebabCase("lowercase"))
+        assertThat(JaversStreamContributor.toKebabCase("lowercase"))
                 .isEqualTo("lowercase");
     }
 
     @Test
     void singleUppercaseWordBecomesLowercase() {
-        assertThat(JaversStreamBeanPostProcessor.toKebabCase("Product"))
+        assertThat(JaversStreamContributor.toKebabCase("Product"))
                 .isEqualTo("product");
     }
 
     @Test
     void consecutiveCapitalsProduceOneDashPerCapital() {
         // Current contract: every uppercase letter past index 0 is preceded by a dash
-        assertThat(JaversStreamBeanPostProcessor.toKebabCase("ABCHandler"))
+        assertThat(JaversStreamContributor.toKebabCase("ABCHandler"))
                 .isEqualTo("a-b-c-handler");
     }
 
     @Test
     void emptyStringReturnsEmpty() {
-        assertThat(JaversStreamBeanPostProcessor.toKebabCase(""))
+        assertThat(JaversStreamContributor.toKebabCase(""))
                 .isEqualTo("");
     }
 }

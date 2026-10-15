@@ -16,7 +16,7 @@
 package io.flowwarden.javers.integration;
 
 import io.flowwarden.javers.autoconfigure.JaversFlowWardenAutoConfiguration;
-import io.flowwarden.javers.internal.JaversStreamBeanPostProcessor;
+import io.flowwarden.javers.internal.JaversStreamContributor;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
 import org.springframework.boot.test.context.FilteredClassLoader;
@@ -31,12 +31,12 @@ class JaversStreamAutoConfigurationIntegrationTest {
 
     @Test
     void registersBeanPostProcessorWhenJaversIsOnClasspath() {
-        runner.run(context -> assertThat(context).hasSingleBean(JaversStreamBeanPostProcessor.class));
+        runner.run(context -> assertThat(context).hasSingleBean(JaversStreamContributor.class));
     }
 
     @Test
     void doesNotRegisterBeanPostProcessorWhenJaversIsAbsent() {
         runner.withClassLoader(new FilteredClassLoader("org.javers.core"))
-                .run(context -> assertThat(context).doesNotHaveBean(JaversStreamBeanPostProcessor.class));
+                .run(context -> assertThat(context).doesNotHaveBean(JaversStreamContributor.class));
     }
 }

@@ -8,13 +8,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- `@RestartPolicy` on a `@JaversStream` class is honoured (per-stream cadence and ceiling of the managed restart loop, stream-core rc.7). (#30)
 
 ### Changed
+- `@JaversStream` beans are now declared through stream-core's public registration API — a `StreamDefinitionContributor` contributes one `StreamSpec` per bean — instead of constructing stream-core's internal `ChangeStreamDefinition` and registering it in the internal `StreamRegistry`. No class from `io.flowwarden.stream.internal` is referenced any more, so stream-core minors no longer break this module (the positional constructor broke at rc.3, rc.4 and rc.7). The stream-core annotations found on the class are mapped to their spec equivalents; the Javers handler names shown by the Console (`JAVERS_OnInitial`, …) now go through `StreamSpec.handlerNames`. Bootstrap timing is unchanged: contributors run after all singletons are created and before any stream starts. Requires stream-core `1.0.0-rc.7`. (#30)
+- The auto-configured bean is `JaversStreamContributor`; `JaversStreamBeanPostProcessor` is gone (it was internal).
 
 ### Removed
 
 ### Fixed
 - `@JaversStream` is now a Spring stereotype (meta-annotated with `@Component`), like `@ChangeStream` in stream-core. A handler class declared as the README shows — in a scanned package, no `@Component` — was never a bean, so it was never discovered and no stream was registered, without any log. (#34)
+- README no longer claims `@Filter` and `@Pipeline` work on `@JaversStream` classes — they never did (the post-processor passed `null` for both); filtering is by entity type, internally. (#30)
 
 ### Deprecated
 

@@ -15,21 +15,23 @@
  */
 package io.flowwarden.javers.autoconfigure;
 
-import io.flowwarden.javers.internal.JaversStreamBeanPostProcessor;
+import io.flowwarden.javers.internal.JaversStreamContributor;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.context.annotation.Bean;
 
 /**
- * Auto-configuration that enables {@code @JaversStream} annotation processing
- * when both FlowWarden and Javers are on the classpath.
+ * Registers the {@link JaversStreamContributor} when Javers is on the classpath. The
+ * contributor is picked up by stream-core's registration processor like any other
+ * {@code StreamDefinitionContributor} — after all singletons are created, before any
+ * stream starts.
  */
 @AutoConfiguration
 @ConditionalOnClass(name = "org.javers.core.Javers")
 public class JaversFlowWardenAutoConfiguration {
 
     @Bean
-    public static JaversStreamBeanPostProcessor javersStreamBeanPostProcessor() {
-        return new JaversStreamBeanPostProcessor();
+    public JaversStreamContributor javersStreamContributor() {
+        return new JaversStreamContributor();
     }
 }
