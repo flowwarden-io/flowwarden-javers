@@ -22,32 +22,31 @@ import io.flowwarden.javers.annotation.OnTerminal;
 import io.flowwarden.javers.annotation.OnUpdate;
 import io.flowwarden.stream.ChangeStreamContext;
 import io.flowwarden.stream.DeploymentMode;
-import io.flowwarden.stream.FullDocumentBeforeChangeMode;
 import io.flowwarden.stream.FullDocumentMode;
-import io.flowwarden.stream.OperationType;
 import io.flowwarden.stream.annotation.Checkpoint;
 import io.flowwarden.stream.annotation.DeadLetterQueue;
 import io.flowwarden.stream.annotation.MongoDlqOptions;
+import io.flowwarden.stream.annotation.RestartPolicy;
 import io.flowwarden.stream.annotation.RetryPolicy;
 import io.flowwarden.stream.core.ContextHandler;
-import io.flowwarden.stream.internal.discovery.ChangeStreamDefinition;
-import io.flowwarden.stream.internal.discovery.ErrorHandlerResolver;
-import io.flowwarden.stream.internal.discovery.HandlerMethod;
-import io.flowwarden.stream.internal.discovery.StreamConfig;
-import io.flowwarden.stream.internal.discovery.StreamRegistry;
+import io.flowwarden.stream.registration.CheckpointSpec;
+import io.flowwarden.stream.registration.DeadLetterQueueSpec;
+import io.flowwarden.stream.registration.MongoDlqOptionsSpec;
+import io.flowwarden.stream.registration.RestartPolicySpec;
+import io.flowwarden.stream.registration.RetryPolicySpec;
+import io.flowwarden.stream.registration.StreamDefinitionContributor;
+import io.flowwarden.stream.registration.StreamRegistration;
+import io.flowwarden.stream.registration.StreamSpec;
 import org.bson.Document;
 import org.javers.core.Javers;
 import org.javers.core.metamodel.object.CdoSnapshot;
-import org.javers.core.metamodel.object.SnapshotType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.aop.support.AopUtils;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanCreationException;
-import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
-import org.springframework.core.Ordered;
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.data.mongodb.core.convert.MongoConverter;
 
@@ -60,12 +59,24 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Discovers beans annotated with {@link JaversStream} and registers them as
- * FlowWarden Change Stream definitions watching the Javers snapshot collection.
+ * Declares every {@code @JaversStream} bean as a FlowWarden stream through the public
+ * registration API — one {@code StreamSpec} per bean, contributed once at bootstrap.
+ *
+ * <p>Javers writes every snapshot (INITIAL / UPDATE / TERMINAL) as a new document in the
+ * snapshot collection, so at the change stream level it is always an {@code INSERT}: the
+ * stream registers a single {@code onInsert} handler that filters by entity type and routes
+ * to the bean's {@code @OnInitial} / {@code @OnUpdate} / {@code @OnTerminal} methods. The
+ * stream-core annotations found on the class ({@code @Checkpoint}, {@code @RetryPolicy},
+ * {@code @RestartPolicy}, {@code @DeadLetterQueue}, {@code @MongoDlqOptions}) are mapped to
+ * their spec equivalents; {@code handlerNames} reports the Javers handlers to monitoring
+ * instead of a misleading {@code INSERT}.</p>
+ *
+ * <p>Only public stream-core API is used — no dependency on
+ * {@code io.flowwarden.stream.internal}.</p>
  */
-public class JaversStreamBeanPostProcessor implements BeanPostProcessor, ApplicationContextAware, Ordered {
+public class JaversStreamContributor implements StreamDefinitionContributor, ApplicationContextAware {
 
-    private static final Logger log = LoggerFactory.getLogger(JaversStreamBeanPostProcessor.class);
+    private static final Logger log = LoggerFactory.getLogger(JaversStreamContributor.class);
     private static final String DEFAULT_SNAPSHOT_COLLECTION = "jv_snapshots";
 
     private ApplicationContext applicationContext;
@@ -76,101 +87,116 @@ public class JaversStreamBeanPostProcessor implements BeanPostProcessor, Applica
     }
 
     @Override
-    public int getOrder() {
-        return Ordered.LOWEST_PRECEDENCE;
+    public void contribute(StreamRegistration registration) {
+        Map<String, Object> beans = applicationContext.getBeansWithAnnotation(JaversStream.class);
+        beans.forEach((beanName, bean) -> contribute(registration, beanName, bean));
     }
 
-    @Override
-    public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
+    void contribute(StreamRegistration registration, String beanName, Object bean) {
         Class<?> targetClass = AopUtils.getTargetClass(bean);
         JaversStream annotation = AnnotationUtils.findAnnotation(targetClass, JaversStream.class);
         if (annotation == null) {
-            return bean;
+            return;
         }
 
-        // Discover typed handlers
         Map<String, List<JaversHandlerMethod>> handlers = discoverHandlers(targetClass, beanName);
-
         if (handlers.isEmpty()) {
             throw new BeanCreationException(beanName,
                     "@JaversStream class " + targetClass.getName()
                             + " must have at least one handler method (@OnInitial, @OnUpdate, or @OnTerminal)");
         }
 
-        // Resolve snapshot collection name
         String snapshotCollection = resolveSnapshotCollection(annotation);
-
-        // Resolve stream name
         String streamName = annotation.name().isEmpty()
                 ? toKebabCase(targetClass.getSimpleName())
                 : annotation.name();
-
-        // Get FlowWarden annotations that should still work
-        Checkpoint cpAnnotation = AnnotationUtils.findAnnotation(targetClass, Checkpoint.class);
-        RetryPolicy retryAnnotation = AnnotationUtils.findAnnotation(targetClass, RetryPolicy.class);
-        DeadLetterQueue dlqAnnotation = AnnotationUtils.findAnnotation(targetClass, DeadLetterQueue.class);
-        MongoDlqOptions mongoDlqAnnotation = AnnotationUtils.findAnnotation(targetClass, MongoDlqOptions.class);
-
-        // Build the internal dispatch handler
         Class<?> entityType = annotation.entityType();
-        ContextHandler<?> dispatchHandler = ctx -> {
-            dispatch(bean, ctx, entityType, handlers);
-        };
 
-        // Javers writes every snapshot (INITIAL/UPDATE/TERMINAL) as a new document in
-        // jv_snapshots — at the Mongo Change Stream level it is always an INSERT. Registering
-        // as a typed handler avoids stream-core's onChange annotation-filter path which NPEs
-        // on lambda-backed HandlerMethods (no underlying java.lang.reflect.Method).
-        HandlerMethod insertHandler = HandlerMethod.fromContextHandler(dispatchHandler);
-        Map<OperationType, HandlerMethod> typedHandlers = Map.of(OperationType.INSERT, insertHandler);
+        ContextHandler<Document> dispatchHandler = ctx -> dispatch(bean, ctx, entityType, handlers);
 
-        StreamConfig config = new StreamConfig(
-                true,
-                annotation.autoStart(),
-                Document.class,
-                "",
-                FullDocumentMode.UPDATE_LOOKUP,
-                FullDocumentBeforeChangeMode.OFF,
-                DeploymentMode.ALL_INSTANCES
-        );
-
-        // Pass discovered Javers handler names as metadata for the reporter
-        Map<String, Object> metadata = Map.of(
-                "handlers", handlers.keySet().stream()
+        StreamSpec.Builder<Document> spec = registration.stream(streamName, Document.class)
+                .collection(snapshotCollection)
+                .database(annotation.database())
+                .autoStart(annotation.autoStart())
+                .fullDocument(FullDocumentMode.UPDATE_LOOKUP)
+                .deploymentMode(DeploymentMode.ALL_INSTANCES)
+                .onInsert(dispatchHandler)
+                .handlerNames(handlers.keySet().stream()
                         .map(k -> "JAVERS_" + k)
                         .sorted()
-                        .toList()
-        );
+                        .toList());
 
-        ChangeStreamDefinition definition = new ChangeStreamDefinition(
-                streamName,
-                snapshotCollection,
-                annotation.database(),
-                "",
-                bean,
-                null,
-                typedHandlers,
-                config,
-                null,  // pipeline — handled via internal filtering
-                null,  // filter
-                cpAnnotation,
-                retryAnnotation,
-                dlqAnnotation,
-                mongoDlqAnnotation,
-                new ErrorHandlerResolver(List.of()),
-                metadata
-        );
-
-        // Register with FlowWarden's StreamRegistry
-        StreamRegistry registry = applicationContext.getBean(StreamRegistry.class);
-        registry.register(definition);
+        Checkpoint cp = AnnotationUtils.findAnnotation(targetClass, Checkpoint.class);
+        if (cp != null) {
+            spec.checkpoint(checkpointSpec(cp));
+        }
+        RetryPolicy retry = AnnotationUtils.findAnnotation(targetClass, RetryPolicy.class);
+        if (retry != null) {
+            spec.retryPolicy(retryPolicySpec(retry));
+        }
+        RestartPolicy restart = AnnotationUtils.findAnnotation(targetClass, RestartPolicy.class);
+        if (restart != null) {
+            spec.restartPolicy(restartPolicySpec(restart));
+        }
+        DeadLetterQueue dlq = AnnotationUtils.findAnnotation(targetClass, DeadLetterQueue.class);
+        if (dlq != null) {
+            spec.deadLetterQueue(deadLetterQueueSpec(dlq));
+        }
+        MongoDlqOptions mongoDlq = AnnotationUtils.findAnnotation(targetClass, MongoDlqOptions.class);
+        if (mongoDlq != null) {
+            spec.mongoDlqOptions(MongoDlqOptionsSpec.builder().collection(mongoDlq.collection()).build());
+        }
 
         log.info("Discovered Javers Stream '{}' on collection '{}' for entity {} (handlers: {})",
                 streamName, snapshotCollection, entityType.getSimpleName(),
                 String.join(", ", handlers.keySet()));
-
-        return bean;
     }
+
+    // --- stream-core annotations → spec equivalents ---
+
+    static CheckpointSpec checkpointSpec(Checkpoint cp) {
+        return CheckpointSpec.builder()
+                .saveEveryN(cp.saveEveryN())
+                .saveIntervalSeconds(cp.saveIntervalSeconds())
+                .idleHeartbeatIntervalSeconds(cp.idleHeartbeatIntervalSeconds())
+                .stuckAfterProbes(cp.stuckAfterProbes())
+                .startPosition(cp.startPosition())
+                .onHistoryLost(cp.onHistoryLost())
+                .build();
+    }
+
+    static RetryPolicySpec retryPolicySpec(RetryPolicy rp) {
+        return RetryPolicySpec.builder()
+                .maxAttempts(rp.maxAttempts())
+                .initialDelay(rp.initialDelay())
+                .maxDelay(rp.maxDelay())
+                .multiplier(rp.multiplier())
+                .retryOn(List.of(rp.retryOn()))
+                .noRetryOn(List.of(rp.noRetryOn()))
+                .jitter(rp.jitter())
+                .build();
+    }
+
+    static RestartPolicySpec restartPolicySpec(RestartPolicy rp) {
+        return RestartPolicySpec.builder()
+                .maxAttempts(rp.maxAttempts())
+                .initialDelay(rp.initialDelay())
+                .maxDelay(rp.maxDelay())
+                .multiplier(rp.multiplier())
+                .jitter(rp.jitter())
+                .build();
+    }
+
+    static DeadLetterQueueSpec deadLetterQueueSpec(DeadLetterQueue dlq) {
+        return DeadLetterQueueSpec.builder()
+                .enabled(dlq.enabled())
+                .retentionDays(dlq.retentionDays())
+                .includeOriginalDocument(dlq.includeOriginalDocument())
+                .includeStackTrace(dlq.includeStackTrace())
+                .build();
+    }
+
+    // --- Dispatch ---
 
     @SuppressWarnings({"unchecked", "rawtypes"})
     private void dispatch(Object bean, ChangeStreamContext<?> ctx, Class<?> entityType,

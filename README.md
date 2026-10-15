@@ -25,7 +25,7 @@ Built on top of MongoDB Change Streams, it captures Javers audit events in real 
 - **Typed lifecycle handlers** — `@OnInitial` (creation), `@OnUpdate` (modification), `@OnTerminal` (deletion)
 - **Deserialized domain objects** — receive your entity (e.g., `Product`) not raw `Document`
 - **Javers metadata** — commit author, changed properties, version, commit date via `JaversChangeContext`
-- **Full FlowWarden support** — `@Checkpoint`, `@RetryPolicy`, `@DeadLetterQueue`, `@Filter`, `@Pipeline` all work
+- **FlowWarden policies** — `@Checkpoint`, `@RetryPolicy`, `@RestartPolicy`, `@DeadLetterQueue`, `@MongoDlqOptions` work on the handler class
 - **Auto-detection** — resolves Javers snapshot collection name from Javers properties
 - **Spring Boot auto-configuration** — just add the dependency
 
@@ -37,7 +37,7 @@ Built on top of MongoDB Change Streams, it captures Javers audit events in real 
 <dependency>
     <groupId>io.flowwarden</groupId>
     <artifactId>flowwarden-stream-core</artifactId>
-    <version>1.0.0-rc.4</version>
+    <version>1.0.0-rc.7</version>
 </dependency>
 <dependency>
     <groupId>io.flowwarden</groupId>
@@ -130,15 +130,18 @@ The Javers snapshot collection name is resolved in order:
 
 ### FlowWarden annotations
 
-All standard FlowWarden annotations work on `@JaversStream` classes:
+The FlowWarden policy annotations work on `@JaversStream` classes, exactly as on a `@ChangeStream` class:
 
 | Annotation | Purpose |
 |------------|---------|
-| `@Checkpoint` | Resume token persistence |
-| `@RetryPolicy` | Exponential backoff on failure |
-| `@DeadLetterQueue` | Route failed events to DLQ |
-| `@Filter` | Application-side event filtering |
-| `@Pipeline` | Additional server-side MongoDB filtering |
+| `@Checkpoint` | Resume token persistence, idle probing, stuck-stream detection |
+| `@RetryPolicy` | Exponential backoff on handler failure |
+| `@RestartPolicy` | Cadence and ceiling of the managed restart loop after a cursor death |
+| `@DeadLetterQueue` / `@MongoDlqOptions` | Route failed events to the DLQ |
+
+`@Filter` and `@Pipeline` are **not** supported on `@JaversStream` classes: the stream watches the whole snapshot collection and filters by entity type internally, before dispatching to your handlers.
+
+Under the hood, each `@JaversStream` bean is declared through stream-core's public registration API (`StreamDefinitionContributor` / `StreamSpec`), so the Console shows the Javers handlers (`JAVERS_OnInitial`, …) rather than the single `INSERT` the snapshot stream technically registers.
 
 ## Compatibility
 
@@ -146,7 +149,7 @@ All standard FlowWarden annotations work on `@JaversStream` classes:
 |-----------|---------|-------------|
 | Java | 17 | 21 |
 | Spring Boot | 3.2.x | 3.2.x+ |
-| FlowWarden Stream Core | 1.0.0-rc.4 | 1.0.0-rc.4+ |
+| FlowWarden Stream Core | 1.0.0-rc.7 | 1.0.0-rc.7+ |
 | Javers | 7.x | 7.11.5+ |
 | MongoDB Server | 6.0 | 7.0+ |
 

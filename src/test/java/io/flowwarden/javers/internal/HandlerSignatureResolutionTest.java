@@ -19,7 +19,7 @@ import io.flowwarden.javers.JaversChangeContext;
 import io.flowwarden.javers.annotation.JaversStream;
 import io.flowwarden.javers.annotation.OnInitial;
 import io.flowwarden.javers.test.fixture.Product;
-import io.flowwarden.stream.internal.discovery.StreamRegistry;
+import io.flowwarden.stream.registration.StreamRegistration;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.BeanCreationException;
@@ -33,52 +33,52 @@ import static org.mockito.Mockito.when;
 
 class HandlerSignatureResolutionTest {
 
-    private JaversStreamBeanPostProcessor bpp;
+    private JaversStreamContributor contributor;
 
     @BeforeEach
     void setUp() {
         ApplicationContext ctx = mock(ApplicationContext.class);
-        when(ctx.getBean(StreamRegistry.class)).thenReturn(mock(StreamRegistry.class));
         when(ctx.getEnvironment()).thenReturn(new MockEnvironment());
-        bpp = new JaversStreamBeanPostProcessor();
-        bpp.setApplicationContext(ctx);
+        contributor = new JaversStreamContributor();
+        contributor.setApplicationContext(ctx);
+    }
+
+    private void contribute(Object bean, String beanName) {
+        contributor.contribute(new StreamRegistration(), beanName, bean);
     }
 
     @Test
     void entityAndContextSignatureIsAccepted() {
-        assertThatCode(() -> bpp.postProcessAfterInitialization(new EntityAndCtx(), "b"))
-                .doesNotThrowAnyException();
+        assertThatCode(() -> contribute(new EntityAndCtx(), "b")).doesNotThrowAnyException();
     }
 
     @Test
     void entityOnlySignatureIsAccepted() {
-        assertThatCode(() -> bpp.postProcessAfterInitialization(new EntityOnly(), "b"))
-                .doesNotThrowAnyException();
+        assertThatCode(() -> contribute(new EntityOnly(), "b")).doesNotThrowAnyException();
     }
 
     @Test
     void contextOnlySignatureIsAccepted() {
-        assertThatCode(() -> bpp.postProcessAfterInitialization(new CtxOnly(), "b"))
-                .doesNotThrowAnyException();
+        assertThatCode(() -> contribute(new CtxOnly(), "b")).doesNotThrowAnyException();
     }
 
     @Test
     void twoParamsWithoutJaversChangeContextRejected() {
-        assertThatThrownBy(() -> bpp.postProcessAfterInitialization(new TwoParamsWrong(), "b"))
+        assertThatThrownBy(() -> contribute(new TwoParamsWrong(), "b"))
                 .isInstanceOf(BeanCreationException.class)
                 .hasMessageContaining("invalid signature");
     }
 
     @Test
     void threeParamsRejected() {
-        assertThatThrownBy(() -> bpp.postProcessAfterInitialization(new ThreeParams(), "b"))
+        assertThatThrownBy(() -> contribute(new ThreeParams(), "b"))
                 .isInstanceOf(BeanCreationException.class)
                 .hasMessageContaining("invalid signature");
     }
 
     @Test
     void noParamsRejected() {
-        assertThatThrownBy(() -> bpp.postProcessAfterInitialization(new NoParams(), "b"))
+        assertThatThrownBy(() -> contribute(new NoParams(), "b"))
                 .isInstanceOf(BeanCreationException.class)
                 .hasMessageContaining("invalid signature");
     }
