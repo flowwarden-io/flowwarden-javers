@@ -63,7 +63,7 @@
         <license.year>2026</license.year>
         <javers.version>7.11.8</javers.version>
         <testcontainers.version>1.21.4</testcontainers.version>
-        <mockito.version>5.23.0</mockito.version>
+        <mockito.version>5.24.0</mockito.version>
         <awaitility.version>4.3.0</awaitility.version>
     </properties>
 
