@@ -91,6 +91,8 @@ public class ProductAuditHandler {
 
 That's it. Every time a `Product` is saved or deleted through the audited repository, Javers creates a snapshot and FlowWarden delivers it to your handler with the deserialized entity and full audit metadata.
 
+`@JaversStream` is a Spring stereotype (meta-annotated with `@Component`), like `@ChangeStream` in stream-core: a handler class in a scanned package is picked up at startup with no extra annotation. Only beans are discovered — a handler outside component scanning must be declared explicitly (`@Import`, `@Bean`), otherwise it is silently ignored.
+
 ## Handler Signatures
 
 Handler methods annotated with `@OnInitial`, `@OnUpdate`, or `@OnTerminal` support the following signatures:
