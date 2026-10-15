@@ -42,7 +42,7 @@ Built on top of MongoDB Change Streams, it captures Javers audit events in real 
 <dependency>
     <groupId>io.flowwarden</groupId>
     <artifactId>flowwarden-javers</artifactId>
-    <version>1.0.0-rc.2</version>
+    <version>1.0.0-rc.3</version>
 </dependency>
 <dependency>
     <groupId>org.javers</groupId>
