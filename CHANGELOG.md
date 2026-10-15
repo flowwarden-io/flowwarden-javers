@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 ### Fixed
+- `@JaversStream` is now a Spring stereotype (meta-annotated with `@Component`), like `@ChangeStream` in stream-core. A handler class declared as the README shows — in a scanned package, no `@Component` — was never a bean, so it was never discovered and no stream was registered, without any log. (#34)
 
 ### Deprecated
 

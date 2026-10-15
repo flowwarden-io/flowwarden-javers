@@ -20,6 +20,7 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import org.springframework.stereotype.Component;
 
 /**
  * Declares a Javers audit stream handler for a specific entity type.
@@ -30,6 +31,12 @@ import java.lang.annotation.Target;
  *
  * <p>The handler receives the deserialized domain entity and Javers metadata
  * via {@link io.flowwarden.javers.JaversChangeContext}.</p>
+ *
+ * <p>This is a Spring stereotype (meta-annotated with {@link Component}), like
+ * {@code @ChangeStream} in stream-core: a class carrying it inside a scanned package
+ * becomes a bean and is discovered at startup with no further annotation. Only beans
+ * are discovered — a handler that is neither scanned nor declared explicitly is
+ * silently ignored.</p>
  *
  * <p>Example:</p>
  * <pre>{@code
@@ -48,6 +55,7 @@ import java.lang.annotation.Target;
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
+@Component
 public @interface JaversStream {
 
     /**
