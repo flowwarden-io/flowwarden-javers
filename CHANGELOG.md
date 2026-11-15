@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- `flowwarden-stream-core` baseline: 1.0.0-rc.8 (from rc.7). No code change; the registration API this module contributes its streams through is unchanged. Inherited at runtime for `@JaversStream` streams: a stream that fails to start at boot is reported per stream instead of failing the application, and the managed restart loop backs off properly when the cursor is refused at open time.
+
 ## [1.0.0-rc.3] — 2026-10-15
 
 ### Added

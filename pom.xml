@@ -61,9 +61,9 @@
     <properties>
         <java.version>17</java.version>
         <license.year>2026</license.year>
-        <javers.version>7.11.8</javers.version>
+        <javers.version>7.11.10</javers.version>
         <testcontainers.version>1.21.4</testcontainers.version>
-        <mockito.version>5.23.0</mockito.version>
+        <mockito.version>5.24.0</mockito.version>
         <awaitility.version>4.3.0</awaitility.version>
     </properties>
 
@@ -90,7 +90,7 @@
         <dependency>
             <groupId>io.flowwarden</groupId>
             <artifactId>flowwarden-stream-core</artifactId>
-            <version>1.0.0-rc.7</version>
+            <version>1.0.0-rc.8</version>
         </dependency>
 
         <dependency>
