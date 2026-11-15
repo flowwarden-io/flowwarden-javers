@@ -37,12 +37,12 @@ Built on top of MongoDB Change Streams, it captures Javers audit events in real 
 <dependency>
     <groupId>io.flowwarden</groupId>
     <artifactId>flowwarden-stream-core</artifactId>
-    <version>1.0.0-rc.7</version>
+    <version>1.0.0-rc.8</version>
 </dependency>
 <dependency>
     <groupId>io.flowwarden</groupId>
     <artifactId>flowwarden-javers</artifactId>
-    <version>1.0.0-rc.3</version>
+    <version>1.0.0-rc.4</version>
 </dependency>
 <dependency>
     <groupId>org.javers</groupId>
@@ -149,7 +149,7 @@ Under the hood, each `@JaversStream` bean is declared through stream-core's publ
 |-----------|---------|-------------|
 | Java | 17 | 21 |
 | Spring Boot | 3.2.x | 3.2.x+ |
-| FlowWarden Stream Core | 1.0.0-rc.7 | 1.0.0-rc.7+ |
+| FlowWarden Stream Core | 1.0.0-rc.8 | 1.0.0-rc.8+ |
 | Javers | 7.x | 7.11.5+ |
 | MongoDB Server | 6.0 | 7.0+ |
 
